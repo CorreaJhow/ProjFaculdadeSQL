@@ -1,0 +1,124 @@
+/*Criação de DataBase e Selecionando-a*/
+Create Database Faculdade;
+Use Faculdade;
+
+/*Criação de Tabelas*/
+create table Aluno(
+	RA int not null primary key,
+	Nome varchar(50) not null
+);
+
+create table Disciplina(
+	Sigla char(3) NOT NULL primary key,
+	Nome varchar(50) not null,
+	Carga_Horaria int not null
+);
+
+create table Matricula(
+	RA int not null,
+	Sigla char(3) not null,
+	Data_Ano int not null,
+	Data_Semestre int not null,
+	Falta int,
+	Nota_n1 float, 
+	Nota_n2 float,
+	Nota_Sub float,
+	Nota_Media float, 
+	Situacao varchar(50),
+
+	foreign key(RA) references Aluno(RA),
+	foreign key(Sigla) references Disciplina(Sigla)
+);
+
+/*Inserção de Dados*/
+insert into Aluno (RA,Nome)
+values (1,'Abner'),
+(2,'Bruno'),
+(3,'Claytin'),
+(4,'Denise'),
+(5,'Erisson'),
+(6,'Fabio'),
+(7,'Gabriel'),
+(8,'Heitor'),
+(9,'Iris'),
+(10,'Julia');
+
+insert into Disciplina(Sigla, Nome, Carga_Horaria)
+values ('MAT','Matematica',100),
+('DC','Disciplina Complementar',100),
+('LOG','Logica de Programação',100),
+('ALG','Algoritmos',100),
+('ENG','Engenharia de Software',100),
+('NAT','Natureza Tecnologica',100),
+('ED1','Estruturas de Dados',100),
+('ETI','Etica',100),
+('POO','Progamação Orientada a Objetos',100),
+('AMI','Amizade no Serviço',100);
+
+create TRIGGER Calculo_Media_Situacao
+ON Matricula
+FOR update
+AS
+BEGIN
+    DECLARE
+	@NOTA1 DECIMAL(10,2),
+	@NOTA2 DECIMAL(10,2),
+	@RA int,
+	@SIGLA char(3),
+    @FALTA int,
+	@CARGA int;
+
+	SELECT @RA = RA, @SIGLA = Sigla, @NOTA1 = Nota_n1, @NOTA2 = Nota_n2 FROM inserted;
+	select @CARGA = Carga_Horaria from Disciplina;
+    select @FALTA = Falta from inserted;
+
+    UPDATE Matricula SET Nota_Media = (@NOTA1 + @NOTA2)/2
+    WHERE @RA = RA and @SIGLA = Sigla;
+
+	if(@falta < (@CARGA / 4)) 
+begin
+	if(((@NOTA1 + @NOTA2)/2) > 5)
+	begin
+    UPDATE Matricula SET Situacao = ('aprovado') 
+	where @RA = RA and @SIGLA = Sigla;
+end
+    else
+	begin
+	UPDATE Matricula SET Situacao = ('reprovado por nota') 
+	where @RA = RA and @SIGLA = Sigla;
+	end
+end
+	else
+begin
+	UPDATE Matricula SET Situacao = ('reprovado por falta') 
+	where @RA = RA and @SIGLA = Sigla;
+end   
+end
+
+insert into Matricula(RA,Sigla,Data_Ano,Data_Semestre, Falta)
+values (1,'LOG', 2021, 1, 0),
+(2,'ALG', 2021, 1, 0),
+(3,'AMI', 2021, 2, 0),
+(4,'ED1', 2021, 1, 0),
+(5,'LOG', 2021, 1, 0),
+(6,'POO', 2021, 2, 0),
+(7,'NAT', 2021, 1, 0),
+(8,'LOG', 2021, 2, 0),
+(9,'DC', 2021, 1, 0),
+(10,'DC', 2021, 2, 0);
+
+update Matricula set nota_n1 = 5 where RA = 3;
+update Matricula set Nota_n2 = 5 where RA = 3;
+
+update Matricula set Falta = 50 where RA = 1;
+update Matricula set Falta = 10 where RA = 2;
+
+
+update Matricula set Situacao = null where RA = 3;
+update Matricula set nota_n1 = 5 where RA = 2;
+update Matricula set Nota_n2 = 5 where RA = 2;
+update Matricula set Falta = 10 where RA = 3;
+select * from Matricula;
+
+
+
